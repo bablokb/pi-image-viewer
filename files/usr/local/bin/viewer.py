@@ -10,9 +10,16 @@
 # Website: https://github.com/bablokb/pi-image-viewer
 #-----------------------------------------------------------------------------
 
+# system imports
 import sys, locale, time, threading
 from   argparse import ArgumentParser
 
+# imports for APDS9960 gesture sensor
+import board
+import busio
+from adafruit_apds9960.apds9960 import APDS9960
+
+# imports for pygame
 import pygame
 from pygame.locals import *
 from pygame.rect import *
@@ -48,7 +55,15 @@ class Viewer(object):
       K_ESCAPE: self._close
     }
     self._stop = None
-    
+
+    # initialize gesture-sensor
+    i2c = board.I2C()
+    self._apds = APDS9960(i2c)
+    self._apds.proximity_gain = 3
+    self._apds.enable_proximity = True
+    self._apds.gesture_gain   = 3                       # 8x (i.e. max)
+    self._apds.enable_gesture = True
+
   # --- cmdline-parser   -----------------------------------------------------
 
   def _get_parser(self):
@@ -108,7 +123,6 @@ class Viewer(object):
       threading.Thread(target=self._process_gestures).start()
       return
 
-    counter = 0
     ev_dict = {}
     ev_dict['unicode'] = None
 
@@ -117,21 +131,26 @@ class Viewer(object):
       time.sleep(1)
 
     # simulate key-events
+    self._msg(f"_process_gestures: running")
     while not self._stop.is_set():
-      self._msg(f"_process_gestures: count: {counter}")
-      if counter < 4:
-        ev_dict['key'] = pygame.K_RIGHT
-        event = pygame.event.Event(pygame.KEYDOWN,ev_dict)
-        pygame.event.post(event)
-        counter += 1
-      elif counter < 8:
+      time.sleep(0.1)
+
+      gesture = self._apds.gesture()
+      if not gesture:
+        continue
+
+      self._msg(f"_process_gestures: gesture: {gesture}")
+      if gesture == 0x01:
+        ev_dict['key'] = pygame.K_UP
+      elif gesture == 0x02:
+        ev_dict['key'] = pygame.K_DOWN
+      elif gesture == 0x03:
         ev_dict['key'] = pygame.K_LEFT
-        event = pygame.event.Event(pygame.KEYDOWN,ev_dict)
-        pygame.event.post(event)
-        counter += 1
-      elif counter == 8:
-        counter = 0
-      time.sleep(2)
+      elif gesture == 0x04:
+        ev_dict['key'] = pygame.K_RIGHT
+
+      event = pygame.event.Event(pygame.KEYDOWN,ev_dict)
+      pygame.event.post(event)
 
   # --- run application   ----------------------------------------------------
 
