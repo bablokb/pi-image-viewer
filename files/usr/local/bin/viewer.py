@@ -47,7 +47,7 @@ class Viewer(object):
       K_DOWN:   self._down,
       K_ESCAPE: self._close
     }
-    self._running = True
+    self._stop = None
     
   # --- cmdline-parser   -----------------------------------------------------
 
@@ -113,11 +113,11 @@ class Viewer(object):
     ev_dict['unicode'] = None
 
     # wait until system is up
-    while not self._running:
-      time.sleep(2)
+    while self._stop is None:
+      time.sleep(1)
 
     # simulate key-events
-    while self._running:
+    while not self._stop.is_set():
       self._msg(f"_process_gestures: count: {counter}")
       if counter < 4:
         ev_dict['key'] = pygame.K_RIGHT
@@ -151,8 +151,8 @@ class Viewer(object):
     self._img = img.get_rect()
 
     self._process_gestures(True)
-    self._running = True
-    while self._running:
+    self._stop = threading.Event()
+    while not self._stop.is_set():
       for event in pygame.event.get():
         if event.type == QUIT:
           self._close()
@@ -219,7 +219,7 @@ class Viewer(object):
   # --- close window and quit   ----------------------------------------------
 
   def _close(self):
-    self._running = False
+    self._stop.set()
 
 # --- main program   ---------------------------------------------------------
 
