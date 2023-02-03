@@ -10,7 +10,7 @@
 # Website: https://github.com/bablokb/pi-image-viewer
 #-----------------------------------------------------------------------------
 
-import sys, locale, time
+import sys, locale, time, threading
 from   argparse import ArgumentParser
 
 import pygame
@@ -47,6 +47,7 @@ class Viewer(object):
       K_DOWN:   self._down,
       K_ESCAPE: self._close
     }
+    self._running = True
     
   # --- cmdline-parser   -----------------------------------------------------
 
@@ -98,6 +99,40 @@ class Viewer(object):
   def _dump_rect(self,label,r):
     self._msg(f"{label}: (x,y,w,h): ({r.x},{r.y},{r.w},{r.h})")
 
+  # --- run gesture-detection   ----------------------------------------------
+
+  def _process_gestures(self,init=False):
+    """ process gestures """
+
+    if init:
+      threading.Thread(target=self._process_gestures).start()
+      return
+
+    counter = 0
+    ev_dict = {}
+    ev_dict['unicode'] = None
+
+    # wait until system is up
+    while not self._running:
+      time.sleep(2)
+
+    # simulate key-events
+    while self._running:
+      self._msg(f"_process_gestures: count: {counter}")
+      if counter < 4:
+        ev_dict['key'] = pygame.K_RIGHT
+        event = pygame.event.Event(pygame.KEYDOWN,ev_dict)
+        pygame.event.post(event)
+        counter += 1
+      elif counter < 8:
+        ev_dict['key'] = pygame.K_LEFT
+        event = pygame.event.Event(pygame.KEYDOWN,ev_dict)
+        pygame.event.post(event)
+        counter += 1
+      elif counter == 8:
+        counter = 0
+      time.sleep(2)
+
   # --- run application   ----------------------------------------------------
 
   def run(self):
@@ -110,12 +145,13 @@ class Viewer(object):
     self._msg(f"size: ({self.width},{self.height})")
     
     clock = pygame.time.Clock()
-    self._running = True
     moving = False 
     img = pygame.image.load(self.image)
     img.convert()
     self._img = img.get_rect()
 
+    self._process_gestures(True)
+    self._running = True
     while self._running:
       for event in pygame.event.get():
         if event.type == QUIT:
