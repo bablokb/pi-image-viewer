@@ -194,6 +194,8 @@ class Viewer(object):
   # --- process key right   --------------------------------------------------
 
   def _right(self):
+    """ scroll right by moving the image left """
+
     self._dump_rect("img",self._img)
     vx = self.paging*self.width
     if self._img.x - vx < -(self._img.w-self.width):
@@ -205,10 +207,12 @@ class Viewer(object):
   # --- process key left   ---------------------------------------------------
 
   def _left(self):
+    """ scroll left by moving the image right """
+
     self._dump_rect("img",self._img)
     vx = self.paging*self.width
     if self._img.x + vx > 0:
-      vx = -self._img.x
+      vx = -self._img.x             # vx is positive
     self._img.move_ip((vx,0))
     self._msg(f"vx: {vx}")
     self._dump_rect("img",self._img)
@@ -216,10 +220,12 @@ class Viewer(object):
   # --- process key up   -----------------------------------------------------
 
   def _up(self):
+    """ scroll up by moving the image down """
+
     self._dump_rect("img",self._img)
     vy = self.paging*self.height
     if self._img.y + vy > 0:
-      vy = -self._img.y
+      vy = -self._img.y             #vy is positive
     self._img.move_ip((0,vy))
     self._msg(f"vy: {vy}")
     self._dump_rect("img",self._img)
@@ -227,6 +233,8 @@ class Viewer(object):
   # --- process key down   ---------------------------------------------------
 
   def _down(self):
+    """ scroll down by moving the image up """
+
     self._dump_rect("img",self._img)
     vy = self.paging*self.height
     if self._img.y - vy < -(self._img.h-self.height):
@@ -238,6 +246,7 @@ class Viewer(object):
   # --- close window and quit   ----------------------------------------------
 
   def _close(self):
+    """ signal close to all threads """
     self._stop.set()
 
 # --- main program   ---------------------------------------------------------
@@ -251,4 +260,3 @@ if __name__ == '__main__':
   app = Viewer()
   app.run()
   pygame.quit()
-
