@@ -40,6 +40,8 @@ class Viewer(object):
     parser = self._get_parser()
     parser.parse_args(namespace=self)
     self.paging = self.paging[0]
+    self.reverse = -1 if self.reverse else 1
+
     try:
       w,h = self.size[0].split(',')
     except:
@@ -84,6 +86,9 @@ class Viewer(object):
     parser.add_argument('-f', '--fullscreen', action='store_true',
       dest='fullscreen', default=False,
       help="use fullscreen-mode")
+    parser.add_argument('-r', '--reverse', action='store_true',
+      dest='reverse', default=False,
+      help="swap behavior of up/down and left/right")
 
     parser.add_argument('-d', '--debug', action='store_true',
       dest='debug', default=False,
@@ -200,6 +205,7 @@ class Viewer(object):
     vx = self.paging*self.width
     if self._img.x - vx < -(self._img.w-self.width):
       vx = self._img.x + (self._img.w-self.width)
+    vx *= reverse
     self._img.move_ip((-vx,0))
     self._msg(f"vx: {-vx}")
     self._dump_rect("img",self._img)
@@ -213,6 +219,7 @@ class Viewer(object):
     vx = self.paging*self.width
     if self._img.x + vx > 0:
       vx = -self._img.x             # vx is positive
+    vx *= reverse
     self._img.move_ip((vx,0))
     self._msg(f"vx: {vx}")
     self._dump_rect("img",self._img)
@@ -226,6 +233,7 @@ class Viewer(object):
     vy = self.paging*self.height
     if self._img.y + vy > 0:
       vy = -self._img.y             #vy is positive
+    vy *= reverse
     self._img.move_ip((0,vy))
     self._msg(f"vy: {vy}")
     self._dump_rect("img",self._img)
@@ -239,6 +247,7 @@ class Viewer(object):
     vy = self.paging*self.height
     if self._img.y - vy < -(self._img.h-self.height):
       vy = self._img.y + (self._img.h-self.height)
+    vy *= reverse
     self._img.move_ip((0,-vy))
     self._msg(f"vy: {-vy}")
     self._dump_rect("img",self._img)
