@@ -40,7 +40,6 @@ class Viewer(object):
     parser = self._get_parser()
     parser.parse_args(namespace=self)
     self.paging = self.paging[0]
-    self.reverse = -1 if self.reverse else 1
 
     try:
       w,h = self.size[0].split(',')
@@ -49,22 +48,36 @@ class Viewer(object):
     self.width  = int(w)
     self.height = int(h)
 
-    self._MAP = {
-      K_RIGHT:  self._right,
-      K_LEFT:   self._left,
-      K_UP:     self._up,
-      K_DOWN:   self._down,
-      K_ESCAPE: self._close
-    }
+    if self.reverse:
+      self._MAP = {
+        K_LEFT:   self._right,
+        K_RIGHT:  self._left,
+        K_DOWN:   self._up,
+        K_UP:     self._down,
+        K_ESCAPE: self._close
+      }
+    else:
+      self._MAP = {
+        K_RIGHT:  self._right,
+        K_LEFT:   self._left,
+        K_UP:     self._up,
+        K_DOWN:   self._down,
+        K_ESCAPE: self._close
+      }
     self._stop = None
 
     # initialize gesture-sensor
-    i2c = board.I2C()
-    self._apds = APDS9960(i2c)
-    self._apds.proximity_gain = 3
-    self._apds.enable_proximity = True
-    self._apds.gesture_gain   = 3                       # 8x (i.e. max)
-    self._apds.enable_gesture = True
+    try:
+      i2c = board.I2C()
+      self._apds = APDS9960(i2c)
+      self._apds.proximity_gain = 3
+      self._apds.enable_proximity = True
+      self._apds.gesture_gain   = 3                       # 8x (i.e. max)
+      self._apds.enable_gesture = True
+      self._have_sensor = True
+    except:
+      self._have_sensor = False
+      self._msg("Warning: could not detect APDS9960")
 
   # --- cmdline-parser   -----------------------------------------------------
 
@@ -123,6 +136,9 @@ class Viewer(object):
 
   def _process_gestures(self,init=False):
     """ process gestures """
+
+    if not self._have_sensor:
+      return
 
     if init:
       threading.Thread(target=self._process_gestures).start()
@@ -205,7 +221,6 @@ class Viewer(object):
     vx = self.paging*self.width
     if self._img.x - vx < -(self._img.w-self.width):
       vx = self._img.x + (self._img.w-self.width)
-    vx *= reverse
     self._img.move_ip((-vx,0))
     self._msg(f"vx: {-vx}")
     self._dump_rect("img",self._img)
@@ -219,7 +234,6 @@ class Viewer(object):
     vx = self.paging*self.width
     if self._img.x + vx > 0:
       vx = -self._img.x             # vx is positive
-    vx *= reverse
     self._img.move_ip((vx,0))
     self._msg(f"vx: {vx}")
     self._dump_rect("img",self._img)
@@ -233,7 +247,6 @@ class Viewer(object):
     vy = self.paging*self.height
     if self._img.y + vy > 0:
       vy = -self._img.y             #vy is positive
-    vy *= reverse
     self._img.move_ip((0,vy))
     self._msg(f"vy: {vy}")
     self._dump_rect("img",self._img)
@@ -247,7 +260,6 @@ class Viewer(object):
     vy = self.paging*self.height
     if self._img.y - vy < -(self._img.h-self.height):
       vy = self._img.y + (self._img.h-self.height)
-    vy *= reverse
     self._img.move_ip((0,-vy))
     self._msg(f"vy: {-vy}")
     self._dump_rect("img",self._img)
