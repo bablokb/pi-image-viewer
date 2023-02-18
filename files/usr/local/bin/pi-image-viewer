@@ -1,0 +1,20 @@
+#!/bin/bash
+#-----------------------------------------------------------------------------
+# Simple image-viewer based on pygame and an APDS9960 for gesture control.
+#
+# Wrapper-script to start the viewer within the virtual environment.
+#
+# Author: Bernhard Bablok
+#
+# Website: https://github.com/bablokb/pi-image-viewer
+#-----------------------------------------------------------------------------
+
+#!/bin/bash
+
+pgm_dir="${0%/*}"
+pgm_name="${0##*/}"
+venv="$pgm_dir/../lib/$pgm_name"
+
+source "$venv/bin/activate"
+
+python3 "$venv/bin/${pgm_name}.py" "$@"
