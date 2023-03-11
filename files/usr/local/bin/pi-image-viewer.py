@@ -77,7 +77,7 @@ class Viewer(object):
       self._have_sensor = True
     except:
       self._have_sensor = False
-      self._msg("Warning: could not detect APDS9960")
+      self._msg("Warning: could not detect APDS9960",force=True)
 
   # --- cmdline-parser   -----------------------------------------------------
 
