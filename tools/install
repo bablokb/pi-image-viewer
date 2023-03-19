@@ -1,0 +1,72 @@
+#!/bin/bash
+# --------------------------------------------------------------------------
+# This script installs files and services specific to this project.
+#
+# Author: Bernhard Bablok
+# License: GPL3
+#
+# Website: https://github.com/bablokb/pi-image-viewer
+#
+# --------------------------------------------------------------------------
+
+# --- defaults used during installation   ----------------------------------
+
+PACKAGES="python3-venv sdl2-image"
+PACKAGES_PIP="blinka-displayio-pygamedisplay recordclass adafruit_circuitpython_apds9960"
+
+PROJECT="pi-image-viewer"
+
+# --- basic packages   ------------------------------------------------------
+
+if [ -n "$PACKAGES" ]; then
+  apt-get update
+  apt-get -y install $PACKAGES
+fi
+
+# --- create virtual environment and install pip-packages   -----------------
+
+mkdir -p /usr/local/lib
+VENV="/usr/local/lib/$PROJECT"
+
+if [ ! -f "$VENV/bin/activate" ]; then
+  python3 -m venv "$VENV"
+fi
+
+# install PIP3 packages
+source "$VENV/bin/activate"
+[ -n "$PACKAGES_PIP" ] && pip3 --disable-pip-version-check install $PACKAGES_PIP
+deactivate
+
+# --- install specific files   ----------------------------------------------
+
+for f in `find $(dirname "$0")/../files/ -type f -not -name "*.pyc"`; do
+  target="${f#*files}"
+  target_dir="${target%/*}"
+  [ ! -d "$target_dir" ] && mkdir -p "$target_dir"
+  cp "$f" "$target"
+  chown root:root "$target"
+  chmod 644       "$target"
+done
+
+mv  "/usr/local/bin/${PROJECT}.py" "$VENV/bin/"
+chmod 755 "/usr/local/bin/$PROJECT"
+
+# --- configure system   ----------------------------------------------------
+
+# update /boot/config.txt
+if ! grep -q "^dtparam=i2c_arm=on" /boot/config.txt ; then
+  echo -e "[INFO] configuring i2c in /boot/config.txt" 2>&1
+  echo "dtparam=i2c_arm=on" >> /boot/config.txt
+  echo "Modified /boot/config.txt. Restart the system to activate changes"
+fi
+
+# update /etc/modules
+if ! grep -q "^i2c-dev" /etc/modules; then
+  echo -e "[INFO] configuring /etc/modules" 2>&1
+  echo "i2c-dev" >> /etc/modules
+  echo "Modified /etc/modules. Restart the system to activate changes"
+fi
+
+# --- final message   -------------------------------------------------------
+
+echo -e "\nInstallation complete. Run '$PROJECT -h' for a short help" 
