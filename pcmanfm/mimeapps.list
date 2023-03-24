@@ -1,0 +1,7 @@
+[Removed Associations]
+
+[Added Associations]
+image/jpeg=pi-image-viewer.desktop;
+
+[Default Applications]
+image/jpeg=pi-image-viewer.desktop

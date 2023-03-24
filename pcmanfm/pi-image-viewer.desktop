@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Pi-Image-Viewer
+Exec=/usr/local/bin/pi-image-viewer %f
+Categories=Other;
+NoDisplay=true
+MimeType=image/jpeg
+Terminal=false
